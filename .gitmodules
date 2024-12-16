@@ -83,8 +83,10 @@
   branch = develop
 [submodule "sorc/da-utils"]
   path = sorc/da-utils
-  url = https://github.com/noaa-emc/da-utils.git
-  branch = develop
+  #url = https://github.com/noaa-emc/da-utils.git
+  #branch = develop
+  url = https://github.com/ClaraDraper-NOAA/DA-utils.git
+  branch = feature/GaussGrid
 [submodule "sorc/bufr-query"]
   path = sorc/bufr-query
   url = https://github.com/noaa-emc/bufr-query.git
