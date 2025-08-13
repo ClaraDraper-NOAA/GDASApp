@@ -1,0 +1,5 @@
+gchn2ioda:
+  copy:
+    - ['{{ COMIN_OBS }}/{{ current_cycle | to_YMDH }}.csv', '{{ DATA }}/{{ current_cycle | to_YMDH }}.csv'
+    - ['{{ COMIN_OBS }}/ghcnd-stations.txt', '{{ DATA }}/ghcnd-stations.txt'
+
