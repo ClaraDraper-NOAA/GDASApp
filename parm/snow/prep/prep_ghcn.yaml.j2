@@ -4,5 +4,5 @@ stage:
     - ['{{ COMIN_OBS }}/ghcnd-stations.txt', '{{ DATA }}/ghcnd-stations.txt']
 ghcn2ioda:
   copy:
-    - ['{{ DATA }}/{{ ghcn_filestub }}.nc4', '{{ DATA }}/obs/{{ OPREFIX }}ghcn_snow.nc']
+    - ['{{ DATA }}/{{ ghcn_filestub }}.nc4', '{{ DATA }}/prep/{{ OPREFIX }}ghcn_snow.nc']
 
