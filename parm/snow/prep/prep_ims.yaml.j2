@@ -2,6 +2,7 @@ calcfims:
   mkdir:
     - '{{ DATA }}/prep'
   copy:
+<<<<<<< HEAD
     - ['{{ COMIN_OBS }}/{{ OPREFIX }}imssnow96.asc', '{{ DATA }}/prep/ims{{ current_cycle | to_julian }}_4km_v1.3.asc']
     - ['{{ FIXgfs }}/gdas/obs/ims/IMS_4km_to_{{ CASE }}.mx{{ OCNRES }}.nc', '{{ DATA }}/prep/IMS4km_to_FV3_mapping.{{ CASE }}_oro_data.nc']
     - ['{{ COMIN_ATMOS_RESTART_PREV }}/{{ current_cycle | to_fv3time }}.coupler.res', '{{ DATA }}/prep']
@@ -9,6 +10,12 @@ calcfims:
     - ['{{ COMIN_ATMOS_RESTART_PREV }}/{{ current_cycle | to_fv3time }}.sfc_data.tile{{ tile }}.nc', '{{ DATA }}/prep']
     - ["{{ FIXorog }}/{{ CASE }}/{{ CASE }}.mx{{ OCNRES }}_oro_data.tile{{ tile }}.nc", "{{ DATA }}/prep{{ CASE }}.mx{{ OCNRES }}_oro_data.tile{{ tile }}.nc" ]
 {% endfor %}
+=======
+    - ['{{ COMIN_OBS }}/{{ OPREFIX }}imssnow96.asc', '{{ DATA }}/obs/ims{{ current_cycle | to_julian }}_4km_v1.3.asc']
+# remove the below line later once using the C++ IMS SCF code
+    - ['{{ FIXgfs }}/gdas/obs/ims/IMS_4km_to_{{ CASE }}.mx{{ OCNRES }}.nc', '{{ DATA }}/obs/IMS4km_to_FV3_mapping.{{ CASE }}_oro_data.nc']
+    - ['{{ FIXgfs }}/gdas/obs/ims/IMS_4km_to_{{ CASE }}.mx{{ OCNRES }}.nc', '{{ DATA }}/obs/IMS4km_to_FV3_mapping.{{ CASE }}.mx{{ OCNRES }}_oro_data.nc']
+>>>>>>> develop
 ims2ioda:
   copy:
     - ['{{ DATA }}/ims_snow_{{ current_cycle | to_YMDH }}.nc4', '{{ DATA }}/prep/{{ OPREFIX }}ims_snow.tm00.nc']
