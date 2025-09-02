@@ -1,4 +1,6 @@
 stage:
+  mkdir:
+    - '{{ DATA }}/prep'
   copy:
     - ['{{ COMIN_OBS }}/{{ ghcn_filestub }}.csv', '{{ DATA }}/{{ ghcn_filestub }}.csv']
     - ['{{ COMIN_OBS }}/ghcnd-stations.txt', '{{ DATA }}/ghcnd-stations.txt']

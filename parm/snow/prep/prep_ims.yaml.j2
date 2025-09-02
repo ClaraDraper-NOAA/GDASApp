@@ -5,6 +5,7 @@ calcfims:
     - ['{{ COMIN_OBS }}/{{ OPREFIX }}imssnow96.asc', '{{ DATA }}/prep/ims{{ current_cycle | to_julian }}_4km_v1.3.asc']
     # remove the below line later once using the C++ IMS SCF code
     - ['{{ FIXgfs }}/gdas/obs/ims/IMS_4km_to_{{ CASE }}.mx{{ OCNRES }}.nc', '{{ DATA }}/prep/IMS4km_to_FV3_mapping.{{ CASE }}_oro_data.nc']
+    # make sure below is set same as in VAR_BKG_STAGING_YAML
     - ['{{ COMIN_ATMOS_RESTART_PREV }}/{{ current_cycle | to_fv3time }}.coupler.res', '{{ DATA }}/prep']
 {% for tile in range(1, ntiles+1) %}
     - ['{{ COMIN_ATMOS_RESTART_PREV }}/{{ current_cycle | to_fv3time }}.sfc_data.tile{{ tile }}.nc', '{{ DATA }}/prep']
