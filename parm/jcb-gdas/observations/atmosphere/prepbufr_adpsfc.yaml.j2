@@ -463,17 +463,16 @@
       name: reject
 
   # Terrain height correction of temperature obs (height difference * lapse rate)
-# UNCOMMENT ONCE PR is merged.
-#  - filter: Variable Assignment
-#    assignments:
-#    - name: DerivedObsValue/airTemperatureAt2M
-#      type: float
-#      function:
-#        name: ObsFunction/ModelHeightAdjustedAirTemperature
-#        options:
-#          elevation:
-#            name: MetaData/stationElevation
-#          lapse rate: 0.0045
+  - filter: Variable Assignment
+    assignments:
+    - name: DerivedObsValue/airTemperatureAt2M
+      type: float
+      function:
+        name: ObsFunction/ModelHeightAdjustedAirTemperature
+        options:
+          elevation:
+            name: MetaData/stationElevation
+          lapse rate: 0.0045
   - filter: Variable Assignment
     assignments:
     - name: TempTerrainCorrectionRaw/airTemperatureAt2M
