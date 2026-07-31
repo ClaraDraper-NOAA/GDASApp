@@ -260,7 +260,6 @@
   #    name: reduce obs space
 
   # For T obs, keep only desired obs types
-  # to-do add in 187 here
   - filter: RejectList
     udescriptor: "obs_type_check"
     filter variables:
@@ -268,7 +267,7 @@
     where:
     - variable:
         name: ObsType/airTemperatureAt2M
-      is_not_in: [181]
+      is_not_in: [181,187]
   - filter: RejectList
     filter variables:
     - name: airTemperatureAt2M
@@ -472,7 +471,9 @@
         options:
           elevation:
             name: MetaData/stationElevation
-          lapse rate: 0.0045
+          temperature lapse rate in K/km:
+            scheme: constant
+            value: 4.5
   - filter: Variable Assignment
     assignments:
     - name: TempTerrainCorrectionRaw/airTemperatureAt2M
