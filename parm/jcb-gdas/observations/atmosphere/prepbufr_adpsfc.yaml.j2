@@ -48,20 +48,16 @@
   # Observation Pre Filters (QC)
   # ------------------------------
 
-{% set assimilated_variables = ['stationPressure'] %}
-{% set keep_obstypes         = [181, 187] %}
-
-  obs pre filters:
-   
-  # remove all records not in desired obs type from obs space
-  # reject all obs not of desired variable
-  # --------------------------------
 {% set assim_variables = ['stationPressure'] %}
 {% set assim_obstypes         = [181, 187] %}
 
   obs pre filters:
+
+  # remove all records not in desired obs type from obs space
+  # reject all obs not of desired variable
+  # --------------------------------
  
-  # discard obs outside of desired 
+  # discard obs outside of desired obs types
   - filter: Perform Action
     where:
     - variable:
