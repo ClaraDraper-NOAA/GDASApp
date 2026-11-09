@@ -1,0 +1,228 @@
+-
+
+  # Observation Space (I/O)
+  # -----------------------
+  obs space:
+    name: {{observation_from_jcb}}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: "{{atmosphere_obsdatain_path}}/{{atmosphere_obsdatain_prefix}}{{observation_from_jcb}}{{atmosphere_obsdatain_suffix}}"
+        missing file action: warn
+      obsgrouping:
+        group variables: ["stationIdentification"]
+        sort variable: "pressure"
+        sort order: "descending"
+    obsdataout:
+      engine:
+        type: H5File
+        obsfile: "{{atmosphere_obsdataout_path}}/{{atmosphere_obsdataout_prefix}}{{observation_from_jcb}}{{atmosphere_obsdataout_suffix}}"
+    io pool:
+      max pool size: 1
+    simulated variables: [windEastward, windNorthward]
+    observed variables: [windEastward, windNorthward]
+
+  # Observation Operator: profilers report height, so GSI uses height rather than pressure
+  # --------------------
+  obs operator:
+    name: VertInterp
+    vertical coordinate: geopotential_height
+    observation vertical coordinate: adjustedHeight
+    observation vertical coordinate group: DerivedVariables
+    interpolation method: linear
+    # 10 m wind reduction, as GSI setupw factw
+    hofx scaling field: SurfaceWindScalingHeight
+    hofx scaling field group: DerivedVariables
+
+  # Linear Observation Operator
+  # ---------------------------
+  linear obs operator:
+    name: VertInterp
+    vertical coordinate: geopotential_height
+    observation vertical coordinate: adjustedHeight
+    observation vertical coordinate group: DerivedVariables
+    interpolation method: linear
+    hofx scaling field: SurfaceWindScalingHeight
+    hofx scaling field group: DerivedVariables
+
+  # Observation Pre Filters (QC)
+  # ------------------------------
+
+{% set wind_variables = ['windEastward', 'windNorthward'] %}
+
+  obs pre filters:
+
+  # remove all records not in desired obs type from obs space
+  # --------------------------------
+
+  - filter: Perform Action
+    where:
+    - variable:
+        name: ObsType/windEastward
+      is_not_in: 223, 229
+    action:
+      name: reduce obs space
+
+  # remove the empty levels that pad each report
+  - filter: Perform Action
+    where:
+    - variable: ObsValue/windEastward
+      value: is_not_valid
+    action:
+      name: reduce obs space
+
+  # Observation Prior Filters (QC)
+  # ------------------------------
+
+  obs prior filters:
+
+  # wind QC
+  # ---------------------------------
+
+  # GSI setupw: obs height relative to the model surface, blending station and model surface heights
+  # (returned above mean sea level, as the model heights are)
+  - filter: Variable Transforms
+    Transform: AdjustedHeightCoordinate
+    SkipWhenNoObs: false
+
+  # variables for the surface wind scaling in the obs operator
+  - filter: Variable Transforms
+    Transform: SurfaceWindScalingHeight
+    SkipWhenNoObs: false
+
+{% for var in wind_variables %}
+  - filter: RejectList
+    filter variables:
+    - name: {{ var }}
+    where:
+    - variable: QualityMarker/{{ var }}
+      is_in: 8-15
+      value: is_not_valid
+    where operator: or
+
+  - filter: RejectList
+    filter variables:
+    - name: {{ var }}
+    where:
+    - variable: QualityMarker/pressure
+      is_in: 8-15
+{% endfor %}
+
+  # GSI setupw: reject obs below the surface, and profiler winds with both components under 1 m/s
+  - filter: Bounds Check
+    filter variables:
+{% for var in wind_variables %}
+    - name: {{ var }}
+{% endfor %}
+    test variables:
+    - name: ObsFunction/Arithmetic
+      options:
+        variables:
+        - name: DerivedVariables/adjustedHeight
+        - name: GeoVaLs/height_above_mean_sea_level_at_surface
+        coefs: [1.0, -1.0]
+    minvalue: 0.0
+
+  - filter: RejectList
+    filter variables:
+{% for var in wind_variables %}
+    - name: {{ var }}
+{% endfor %}
+    where:
+    - variable: ObsValue/windEastward
+      minvalue: -0.9999
+      maxvalue: 0.9999
+    - variable: ObsValue/windNorthward
+      minvalue: -0.9999
+      maxvalue: 0.9999
+
+  # error assignments
+  # ---------------------------------
+
+  # set initial errors, then save
+  # ---------------------------------
+
+{% for var in wind_variables %}
+  - filter: Variable Assignment
+    assignments:
+    - name: InputObsError/{{ var }}
+      type: float
+      source variable: ObsErrorData/{{ var }}
+{% endfor %}
+
+  # apply error inflation terms
+  # ---------------------------------
+
+{% for var in wind_variables %}
+  - filter: Perform Action
+    filter variables:
+    - name: {{ var }}
+    where:
+    - variable: QualityMarker/{{ var }}
+      is_in: 3, 7
+    action:
+      name: inflate error
+      inflation factor: 1.2
+
+  - filter: Perform Action
+    filter variables:
+    - name: {{ var }}
+    where:
+    - variable: MetaData/pressure
+      maxvalue: 4999.9
+    action:
+      name: inflate error
+      inflation factor: 1.2
+{% endfor %}
+
+  # profile spacing inflation, as GSI errormod
+  - filter: Variable Assignment
+    assignments:
+    - name: ErrormodFactor/windEastward
+      type: float
+      function:
+        name: ObsFunction/ObsErrorFactorConventional
+        options:
+          inflate variables: [windEastward]
+          pressure: MetaData/pressure
+
+{% for var in wind_variables %}
+  - filter: Perform Action
+    filter variables:
+    - name: {{ var }}
+    action:
+      name: inflate error
+      inflation variable:
+        name: ErrormodFactor/windEastward
+{% endfor %}
+
+  # Observation Post Filters (QC)
+  # -----------------------------
+
+  obs post filters:
+
+  # background checks
+  # ---------------------------------
+
+  # GSI wind gross check on the vector residual (convinfo: gross 7.5, 6.5, ermin 1.4, ermax 6.1;
+  # gross*0.7 for QM=3)
+{% for var in wind_variables %}
+{% for qmwhere, cgross in [('is_not_in', [7.5, 6.5]), ('is_in', [5.25, 4.55])] %}
+  - filter: Background Check
+    filter variables:
+    - name: {{ var }}
+    where:
+    - variable: QualityMarker/{{ var }}
+      {{ qmwhere }}: 3
+    function absolute threshold:
+    - name: ObsFunction/WindsSPDBCheck
+      options:
+        wndtype: [223, 229]
+        cgross: {{ cgross }}
+        error_min: [1.4, 1.4]
+        error_max: [6.1, 6.1]
+        variable: {{ var }}
+    action:
+      name: reject
+{% endfor %}
+{% endfor %}
