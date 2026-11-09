@@ -93,19 +93,20 @@
 
 {% set wind_variables = ['windEastward', 'windNorthward'] %}
 {% set assim_variables = ['airTemperature', 'specificHumidity'] + wind_variables %}
-{% set assim_t_obstypes = [130, 131, 133, 134, 135] %}
+{% set temperature_obstypes   = [130, 131, 133, 134, 135] %}
+{% set humidity_obstypes      = [133] %}
+{% set wind_obstypes          = [230, 231, 233, 234, 235] %}
 
   obs pre filters:
 
   # remove all records not in desired obs type from obs space
-  # reject all obs not of desired variable
   # --------------------------------
 
   - filter: Perform Action
     where:
     - variable:
         name: ObsType/airTemperature
-      is_not_in: {{ assim_t_obstypes | join(', ') }}
+      is_not_in: {{ temperature_obstypes | join(', ') }}
     action:
       name: reduce obs space
 
@@ -122,26 +123,29 @@
     action:
       name: reduce obs space
 
-  # Reject everything, then re-accept desired variables
+  # Reject everything, then re-accept desired variables from their obs types:
+  # q is only assimilated for type 133 (monitored for the other types in GSI convinfo)
+  # --------------------------------
+
   - filter: RejectList
     udescriptor: "reject_all"
 
-{% for var in assim_variables %}
+{% for variables, obstypes in [(['airTemperature'], temperature_obstypes),
+                               (['specificHumidity'], humidity_obstypes),
+                               (wind_variables, wind_obstypes)] %}
   - filter: Perform Action
     filter variables:
+{% for var in variables %}
     - name: {{ var }}
-    action:
-      name: accept
 {% endfor %}
-
-  # q is only assimilated for type 133 (monitored for the other types in GSI convinfo)
-  - filter: RejectList
-    filter variables:
-    - name: specificHumidity
     where:
     - variable:
-        name: ObsType/specificHumidity
-      is_not_in: 133
+        name: ObsType/{{ variables[0] }}
+      is_in: {{ obstypes | join(', ') }}
+    action:
+      name: accept
+
+{% endfor %}
 
   # Observation Prior Filters (QC)
   # ------------------------------
